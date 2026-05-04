@@ -1,15 +1,21 @@
 /**
- * Legacy AES-CBC implementation for backward compatibility with data
- * encrypted by the v0.x Go API (lace/crypt or github.com/ubgo/crypt
- * EncryptCBC).
+ * AES-CBC implementation. First-class peer of AES-GCM (`seal`/`open`).
  *
- * @deprecated AES-CBC has no message authentication. New code should
- * use {@link seal} from "@ubgo/crypt" (AES-256-GCM). Retained for
- * reading existing CBC ciphertexts.
+ * Use cases:
+ *   - Interop with an existing system that uses AES-CBC (PHP
+ *     openssl_encrypt, Java javax.crypto, older Python/Ruby).
+ *   - Reading ciphertext your application already wrote in this
+ *     format (e.g., from the Go counterpart's EncryptCBC).
+ *   - Compliance constraints requiring AES-CBC specifically.
+ *
+ * Trade-offs vs `seal` (AES-256-GCM):
+ *   - CBC has no built-in message authentication. A tampered ciphertext
+ *     either fails PKCS#7 unpadding (~99.6%) or produces silent garbage
+ *     plaintext (~0.4%). Layer HMAC on top (encrypt-then-MAC) or use
+ *     `seal` if you need tamper detection.
+ *   - CBC accepts 16/24/32-byte keys (AES-128/192/256).
  *
  * Wire format: hex(IV[16] || PKCS7-padded ciphertext)
- *
- * Key sizes accepted: 16, 24, or 32 bytes (AES-128/192/256).
  */
 
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto"
@@ -43,9 +49,23 @@ function aesAlgoForKey(keyLen: number): string {
 
 /**
  * PKCS#7-pads the plaintext, AES-CBC encrypts with a fresh random
- * IV, and returns hex(IV || ciphertext).
+ * IV, and returns hex(IV || ciphertext). 16/24/32-byte keys for
+ * AES-128/192/256.
  *
- * @deprecated Use seal from "@ubgo/crypt".
+ * Trade-offs vs `seal` (AES-256-GCM):
+ *   - CBC has no built-in authentication; layer HMAC on top if you
+ *     need tamper detection, or use `seal`.
+ *   - CBC output is hex; `seal` output is base64url-no-pad (more compact).
+ *
+ * Use it when interoperating with an existing AES-CBC system or
+ * reading ciphertext you already wrote in this format.
+ *
+ * @example
+ * ```ts
+ * import { encryptCbc, decryptCbc } from "@ubgo/crypt/legacy"
+ * const ct = encryptCbc(key, "hello")
+ * const pt = decryptCbc(key, ct).toString("utf8")
+ * ```
  */
 export function encryptCbc(
   key: Buffer | Uint8Array,
@@ -71,7 +91,8 @@ export function encryptCbc(
  * Reverses {@link encryptCbc}: hex-decodes, takes the IV from the
  * first 16 bytes, AES-CBC decrypts the rest, removes PKCS#7 padding.
  *
- * @deprecated Use open from "@ubgo/crypt". CBC cannot detect tampering.
+ * See {@link encryptCbc} for trade-offs vs the authenticated AEAD
+ * path (`seal`/`open`).
  */
 export function decryptCbc(key: Buffer | Uint8Array, ciphertext: string): Buffer {
   const k = Buffer.from(key)

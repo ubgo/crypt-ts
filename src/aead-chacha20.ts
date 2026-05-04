@@ -25,7 +25,17 @@ import {
 const VERSION_V2 = 0x02
 
 /**
- * Encrypt under a 32-byte ChaCha20-Poly1305 key.
+ * Encrypt under a 32-byte ChaCha20-Poly1305 key. Wire format
+ * version 0x02 — distinct from `seal` (AES-GCM, 0x01).
+ *
+ * Use only on hardware without AES-NI; otherwise prefer `seal`.
+ *
+ * @example
+ * ```ts
+ * import { sealChaCha20, openChaCha20 } from "@ubgo/crypt"
+ * const ct = sealChaCha20(key, "hello")
+ * const pt = openChaCha20(key, ct).toString("utf8")
+ * ```
  */
 export function sealChaCha20(
   key: Buffer | Uint8Array,

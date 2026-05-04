@@ -24,6 +24,13 @@ export class ExpiredError extends CryptError {
  * @param ttlMs Time-to-live in milliseconds. Must be positive.
  * @param aad   Optional purpose-binding AAD (e.g., "pwreset-v1") to
  *              prevent token-type confusion across endpoints.
+ *
+ * @example Password reset link
+ * ```ts
+ * const tok = issueToken(key, `user_id=${u.id}`, 60 * 60 * 1000, Buffer.from("pwreset-v1"))
+ * const url = `https://app.example.com/reset?t=${tok}`
+ * await sendEmail(u.email, url)
+ * ```
  */
 export function issueToken(
   key: Buffer | Uint8Array,
@@ -46,6 +53,18 @@ export function issueToken(
  * Verify a token: opens, checks the embedded expiry, returns payload.
  *
  * Throws ExpiredError if the embedded expiry is in the past.
+ *
+ * @example Endpoint that consumes a reset link
+ * ```ts
+ * try {
+ *   const payload = verifyToken(key, req.query.t, Buffer.from("pwreset-v1"))
+ *   const userID = payload.toString("utf8").split("=")[1]
+ *   // proceed with reset flow
+ * } catch (e) {
+ *   if (e instanceof ExpiredError) return res.status(410).end("link expired")
+ *   return res.status(400).end("invalid link")
+ * }
+ * ```
  */
 export function verifyToken(
   key: Buffer | Uint8Array,

@@ -434,3 +434,85 @@ plaintext, err := crypt.Open(sharedKey, tsCiphertext, nil)
 | Log decryption errors with plaintext | Log error class + correlation ID only |
 | Same key in dev and prod | Per-environment keys |
 | Catch all errors and silently retry | Each error class signals different action |
+
+---
+
+## v1.1 features
+
+### HKDF derived keys
+
+```ts
+import { AEAD_KEY_SIZE, deriveKey, Sealer } from "@ubgo/crypt"
+import { Buffer } from "node:buffer"
+
+const tenantKey = deriveKey(rootKey, undefined, Buffer.from(`tenant:${tid}`), AEAD_KEY_SIZE)
+const sealer = new Sealer(tenantKey)
+```
+
+### ChaCha20-Poly1305 alternative
+
+```ts
+import { sealChaCha20, openChaCha20 } from "@ubgo/crypt"
+const ct = sealChaCha20(key, plaintext, aad)
+const pt = openChaCha20(key, ct, aad)
+```
+
+### KeyRing for graceful rotation
+
+```ts
+import { KeyRing } from "@ubgo/crypt"
+
+const ring = new KeyRing("2025", oldKey)
+ring.add("2026", newKey)
+ring.setActive("2026")
+
+const fresh = ring.seal(payload)        // tagged "2026"
+const pt = ring.open(oldCiphertext)     // dispatches by kid
+ring.remove("2025")                     // after rotation
+```
+
+---
+
+## v1.2 features
+
+### Time-locked tokens
+
+```ts
+import { ExpiredError, issueToken, verifyToken } from "@ubgo/crypt"
+import { Buffer } from "node:buffer"
+
+const tok = issueToken(key, `user_id=${u.id}`, 60 * 60 * 1000, Buffer.from("pwreset-v1"))
+
+try {
+  const payload = verifyToken(key, tok, Buffer.from("pwreset-v1"))
+} catch (e) {
+  if (e instanceof ExpiredError) return res.status(410).end("link expired")
+  return res.status(400).end("invalid link")
+}
+```
+
+---
+
+## v2 features
+
+### Public-key signatures (Ed25519)
+
+```ts
+import { generateEd25519, signEd25519, verifyEd25519 } from "@ubgo/crypt"
+
+const { publicKey, privateKey } = generateEd25519()
+const sig = signEd25519(privateKey, body)
+verifyEd25519(publicKey, body, sig) // boolean
+```
+
+### Asymmetric encryption (sealed-box)
+
+```ts
+import { generateKeyPair, openAsymmetric, sealAsymmetric } from "@ubgo/crypt"
+
+const { publicKey, privateKey } = generateKeyPair()
+const ct = sealAsymmetric(publicKey, "secret message")
+const pt = openAsymmetric(privateKey, ct).toString("utf8")
+```
+
+For sender authentication, sign the plaintext with Ed25519 first, then seal.

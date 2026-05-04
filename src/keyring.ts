@@ -38,6 +38,29 @@ import {
 const VERSION_AEAD_V3 = 0x03
 const KID_MAX_LEN = 64
 
+/**
+ * Graceful key rotation with embedded kid (key id).
+ *
+ * Writes use the active key; reads dispatch by the kid embedded in
+ * each ciphertext. Old v1 ciphertexts (no kid) are also openable
+ * via try-each fallback.
+ *
+ * @example Annual rotation
+ * ```ts
+ * const ring = new KeyRing("2025", oldKey)
+ * const old = ring.seal("data")            // tagged "2025"
+ *
+ * ring.add("2026", newKey)
+ * ring.setActive("2026")
+ * const fresh = ring.seal("data")          // tagged "2026"
+ *
+ * ring.open(old)    // → reads "2025" branch
+ * ring.open(fresh)  // → reads "2026" branch
+ *
+ * // After all "2025" data is rotated:
+ * ring.remove("2025")
+ * ```
+ */
 export class KeyRing {
   private active: string
   private readonly keys = new Map<string, Buffer>()

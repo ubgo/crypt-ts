@@ -19,20 +19,25 @@ That's the whole API for the most common case.
 
 ## Is this for you?
 
-`@ubgo/crypt` is built for Node.js applications that need a small set of cryptography primitives done well, with safe defaults, no foot-guns, and (optionally) byte-for-byte interop with a Go service. **Reach for it when you're about to write any of the following:**
+`@ubgo/crypt` is built for Node.js applications that need a curated set of cryptography primitives done well, with safe defaults, no foot-guns, and (optionally) byte-for-byte interop with a Go service. **Reach for it when you're about to write any of the following:**
 
-- I need to encrypt a value before storing it (database column, cookie, file) and decrypt it back later.
-- I need to sign outgoing webhooks and verify incoming ones with HMAC-SHA256.
-- I need to generate cryptographically-random API keys, magic-link tokens, CSRF tokens.
-- I need a stateless session token (JWT-like, smaller, no algorithm confusion).
-- I need a Node service to decrypt data my Go service encrypted (or vice versa).
-- I need to compare an API key in constant time, without leaking timing.
-- I need to migrate AES-CBC ciphertext from a previous system to authenticated AES-GCM.
-- I'm tired of fighting Node's mutable Cipher API and want a clean wrapper.
+- Encrypt a value before storing it (database column, cookie, file) and decrypt it back later.
+- Sign outgoing webhooks and verify incoming ones — HMAC-SHA256 or Ed25519 (public-key).
+- Generate cryptographically-random API keys, magic-link tokens, CSRF tokens.
+- Issue stateless time-locked tokens (password reset, email verify, magic login) with embedded expiry.
+- Decrypt in Node what a Go service encrypted (or vice versa) — same wire format.
+- Compare an API key in constant time without leaking timing.
+- Interoperate with an existing AES-CBC system, or read ciphertext you already wrote in CBC.
+- Derive per-tenant or per-purpose sub-keys from a single master with HKDF.
+- Rotate keys gracefully — `KeyRing` with embedded kid; old data still readable, new writes use the active key.
+- Use ChaCha20-Poly1305 instead of AES-GCM (no AES-NI hardware, or defense-in-depth diversity).
+- Encrypt to a recipient's public key — X25519 + ChaCha20-Poly1305 (sealed-box), age-style.
+- Sign with Ed25519 — public-key signatures where verifiers don't share the signing key.
+- Stop fighting Node's mutable Cipher API and use a clean wrapper.
 
 If any of those are on your plate, this is the package.
 
-**Not for you if:** you need browser/WebCrypto (this targets Node.js only), JWT/JOSE (use `@panva/jose`), TLS, PKI, password hashing in Node (do that server-side in Go via the Go counterpart's `HashPassword`).
+**Not for you if:** you need browser/WebCrypto (this targets Node.js only), JWT/JOSE (use `@panva/jose`), TLS, PKI, password hashing in Node (do it server-side in Go via the Go counterpart's `HashPassword`), or KMS adapters / streaming AEAD (Go-only in v1.2).
 
 ---
 
@@ -130,7 +135,19 @@ Plus a sibling in Go using the same wire format, with a shared test vector file 
 
 **Constant-time compare** — `constantTimeEqual`. Wraps `crypto.timingSafeEqual`.
 
-**Legacy AES-CBC support** at `@ubgo/crypt/legacy` — `encryptCbc`, `decryptCbc`, plus `openAuto` migration helper that detects format and dispatches. For reading existing v0.x data only.
+**AES-CBC** at `@ubgo/crypt/legacy` — `encryptCbc`, `decryptCbc` (16/24/32-byte keys for AES-128/192/256). First-class peer of AES-GCM; use it when interop with an existing AES-CBC system is required, or when reading ciphertext you already wrote in this format. CBC has no built-in authentication; pair with HMAC if you need tamper detection. An `openAuto` helper auto-detects AEAD vs CBC for migration scripts.
+
+**ChaCha20-Poly1305 AEAD** — `sealChaCha20`, `openChaCha20`. Wire version 0x02. Use for hardware without AES-NI.
+
+**HKDF key derivation** — `deriveKey`. Per-tenant or per-purpose sub-keys from a single master.
+
+**KeyRing for rotation** — `KeyRing` class with embedded kid. Active key for new writes; retired keys remain readable until natural turnover.
+
+**Time-locked tokens** — `issueToken`, `verifyToken`. Stateless one-time tokens with embedded expiry. Returns `ExpiredError` on expiry.
+
+**Ed25519 signatures** — `generateEd25519`, `signEd25519`, `verifyEd25519`. Public-key signing where verifiers don't share the signing key.
+
+**Asymmetric encryption (sealed-box)** — `generateKeyPair`, `sealAsymmetric`, `openAsymmetric`. X25519 + ChaCha20-Poly1305. Wire version 0x05.
 
 **Cross-language wire format** — every AEAD and HMAC output is byte-identical to the Go counterpart at [`github.com/ubgo/crypt`](https://github.com/ubgo/crypt).
 
@@ -165,8 +182,40 @@ function sign(key: Buffer | Uint8Array, data: Buffer | Uint8Array): Buffer
 function verify(key: Buffer | Uint8Array, data: Buffer | Uint8Array, mac: Buffer | Uint8Array): boolean
 function constantTimeEqual(a: Buffer | Uint8Array, b: Buffer | Uint8Array): boolean
 
-// Legacy CBC (Deprecated — migration only)
+// AES-CBC (16/24/32-byte keys; no built-in auth — pair with HMAC if needed)
 import { encryptCbc, decryptCbc, openAuto } from "@ubgo/crypt/legacy"
+
+// ChaCha20-Poly1305 (alternative AEAD; wire version 0x02)
+function sealChaCha20(key: Buffer | Uint8Array, plaintext: string | Buffer | Uint8Array, aad?: Buffer | Uint8Array): string
+function openChaCha20(key: Buffer | Uint8Array, ciphertext: string, aad?: Buffer | Uint8Array): Buffer
+
+// HKDF key derivation
+function deriveKey(masterKey: Buffer | Uint8Array, salt: Buffer | Uint8Array | undefined, info: Buffer | Uint8Array, length: number): Buffer
+
+// KeyRing for rotation
+class KeyRing {
+  constructor(activeKid: string, activeKey: Buffer | Uint8Array)
+  add(kid: string, key: Buffer | Uint8Array): void
+  remove(kid: string): void
+  setActive(kid: string): void
+  activeKid(): string
+  seal(plaintext: string | Buffer | Uint8Array, aad?: Buffer | Uint8Array): string
+  open(ciphertext: string, aad?: Buffer | Uint8Array): Buffer
+}
+
+// Time-locked tokens (ExpiredError on expiry)
+function issueToken(key: Buffer | Uint8Array, payload: Buffer | string, ttlMs: number, aad?: Buffer | Uint8Array): string
+function verifyToken(key: Buffer | Uint8Array, token: string, aad?: Buffer | Uint8Array): Buffer
+
+// Ed25519 signatures
+function generateEd25519(): { publicKey: Buffer; privateKey: Buffer }
+function signEd25519(privateKey: Buffer | Uint8Array, data: Buffer | Uint8Array): Buffer
+function verifyEd25519(publicKey: Buffer | Uint8Array, data: Buffer | Uint8Array, signature: Buffer | Uint8Array): boolean
+
+// Asymmetric (X25519 + ChaCha20-Poly1305 sealed-box)
+function generateKeyPair(): { publicKey: Buffer; privateKey: Buffer }
+function sealAsymmetric(recipientPublicKey: Buffer | Uint8Array, plaintext: Buffer | string | Uint8Array): string
+function openAsymmetric(recipientPrivateKey: Buffer | Uint8Array, ciphertext: string): Buffer
 ```
 
 ---

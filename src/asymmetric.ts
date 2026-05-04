@@ -52,6 +52,16 @@ export interface Ed25519KeyPair {
 /**
  * Generate a fresh Ed25519 keypair.
  */
+/**
+ * Generate a fresh Ed25519 keypair from the OS CSPRNG.
+ *
+ * @example
+ * ```ts
+ * const { publicKey, privateKey } = generateEd25519()
+ * const sig = signEd25519(privateKey, body)
+ * verifyEd25519(publicKey, body, sig) // true
+ * ```
+ */
 export function generateEd25519(): Ed25519KeyPair {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519")
   const pubRaw = publicKey.export({ format: "der", type: "spki" })
@@ -164,6 +174,16 @@ function x25519PrivateKeyObject(priv: Buffer): KeyObject {
  * Encrypt plaintext to recipientPublicKey using X25519 + ChaCha20-
  * Poly1305 (sealed-box style). Anyone with the matching private key
  * can decrypt; nobody else can. Sender identity is NOT authenticated.
+ *
+ * To authenticate the sender, sign the plaintext with Ed25519 before
+ * sealing.
+ *
+ * @example
+ * ```ts
+ * const { publicKey, privateKey } = generateKeyPair()
+ * const ct = sealAsymmetric(publicKey, "secret message")
+ * const pt = openAsymmetric(privateKey, ct).toString("utf8")
+ * ```
  */
 export function sealAsymmetric(
   recipientPublicKey: Buffer | Uint8Array,

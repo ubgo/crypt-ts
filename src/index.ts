@@ -15,8 +15,27 @@
  */
 
 export { seal, open, Sealer } from "./aead.js"
+export { sealChaCha20, openChaCha20 } from "./aead-chacha20.js"
 export { randomBytes, randomToken, randomHex } from "./random.js"
 export { sign, verify, constantTimeEqual } from "./sign.js"
+export { deriveKey } from "./hkdf.js"
+export { KeyRing } from "./keyring.js"
+export { issueToken, verifyToken, ExpiredError } from "./timelock.js"
+export {
+  generateEd25519,
+  signEd25519,
+  verifyEd25519,
+  generateKeyPair,
+  sealAsymmetric,
+  openAsymmetric,
+  ED25519_PUBLIC_KEY_SIZE,
+  ED25519_PRIVATE_KEY_SIZE,
+  ED25519_SIGNATURE_SIZE,
+  X25519_KEY_SIZE,
+  InvalidSignatureError,
+  type Ed25519KeyPair,
+  type X25519KeyPair,
+} from "./asymmetric.js"
 
 export { AEAD_KEY_SIZE, AEAD_NONCE_SIZE, AEAD_TAG_SIZE, VERSION_AEAD_V1 } from "./format.js"
 

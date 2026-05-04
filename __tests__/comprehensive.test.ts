@@ -231,11 +231,21 @@ describe("openAuto fall-through paths", () => {
     expect(() => openAuto(key, ct)).toThrow()
   })
 
-  it("hex-shaped but wrong key throws", () => {
+  it("hex-shaped but wrong key produces wrong plaintext or throws", () => {
+    // CBC has no auth, so a wrong key either fails padding check or
+    // produces garbage plaintext. Both are acceptable outcomes; we
+    // assert the result is not the original.
     const goodKey = Buffer.alloc(32, 0x02)
-    const ct = encryptCbc(goodKey, "hello")
-    // openAuto will detect CBC shape, try decryptCbc, get padding error.
-    expect(() => openAuto(key, ct)).toThrow()
+    const original = "hello"
+    const ct = encryptCbc(goodKey, original)
+    let differed = false
+    try {
+      const out = openAuto(key, ct)
+      if (out.toString("utf8") !== original) differed = true
+    } catch {
+      differed = true
+    }
+    expect(differed).toBe(true)
   })
 
   it("totally bad input throws UnknownFormatError", () => {

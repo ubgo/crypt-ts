@@ -34,10 +34,21 @@ describe("encryptCbc / decryptCbc", () => {
     expect(() => decryptCbc(KEY32, "deadbeef")).toThrow()
   })
 
-  it("rejects tampered ciphertext (bad padding)", () => {
-    const ct = encryptCbc(KEY32, "secret")
+  it("tampering ciphertext changes the result (CBC has no auth)", () => {
+    // Same caveat as in comprehensive.test.ts: CBC tampering yields
+    // either an unpadding error or garbage plaintext (~1/256 chance
+    // of valid-looking padding). Accept either as "rejected".
+    const original = "secret-payload-of-some-length"
+    const ct = encryptCbc(KEY32, original)
     const tampered = ct.slice(0, -2) + "ff"
-    expect(() => decryptCbc(KEY32, tampered)).toThrow()
+    let differed = false
+    try {
+      const out = decryptCbc(KEY32, tampered)
+      if (out.toString("utf8") !== original) differed = true
+    } catch {
+      differed = true
+    }
+    expect(differed).toBe(true)
   })
 })
 

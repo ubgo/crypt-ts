@@ -3,7 +3,7 @@ import { Buffer } from "node:buffer"
 import { randomBytes } from "node:crypto"
 
 import { open, seal } from "../src/index.js"
-import { decryptCbc, encryptCbc, openAuto } from "../src/legacy/index.js"
+import { decryptCbc, encryptCbc, openAuto } from "../src/index.js"
 import { InvalidKeyError, TamperedError, UnknownFormatError } from "../src/index.js"
 
 const KEY32 = Buffer.alloc(32, 0x01)

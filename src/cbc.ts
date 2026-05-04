@@ -21,14 +21,14 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto"
 import { Buffer } from "node:buffer"
 
-import { CBC_BLOCK_SIZE } from "../format.js"
+import { CBC_BLOCK_SIZE } from "./format.js"
 import {
   CiphertextNotBlockAlignedError,
   CiphertextTooShortError,
   InvalidCiphertextError,
   InvalidKeyError,
   InvalidPaddingError,
-} from "../errors.js"
+} from "./errors.js"
 
 function validCBCKeyLen(n: number): boolean {
   return n === 16 || n === 24 || n === 32
@@ -62,7 +62,7 @@ function aesAlgoForKey(keyLen: number): string {
  *
  * @example
  * ```ts
- * import { encryptCbc, decryptCbc } from "@ubgo/crypt/legacy"
+ * import { encryptCbc, decryptCbc } from "@ubgo/crypt"
  * const ct = encryptCbc(key, "hello")
  * const pt = decryptCbc(key, ct).toString("utf8")
  * ```

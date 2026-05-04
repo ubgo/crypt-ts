@@ -135,7 +135,7 @@ Plus a sibling in Go using the same wire format, with a shared test vector file 
 
 **Constant-time compare** — `constantTimeEqual`. Wraps `crypto.timingSafeEqual`.
 
-**AES-CBC** at `@ubgo/crypt/legacy` — `encryptCbc`, `decryptCbc` (16/24/32-byte keys for AES-128/192/256). First-class peer of AES-GCM; use it when interop with an existing AES-CBC system is required, or when reading ciphertext you already wrote in this format. CBC has no built-in authentication; pair with HMAC if you need tamper detection. An `openAuto` helper auto-detects AEAD vs CBC for migration scripts.
+**AES-CBC** at `@ubgo/crypt` — `encryptCbc`, `decryptCbc` (16/24/32-byte keys for AES-128/192/256). First-class peer of AES-GCM; use it when interop with an existing AES-CBC system is required, or when reading ciphertext you already wrote in this format. CBC has no built-in authentication; pair with HMAC if you need tamper detection. An `openAuto` helper auto-detects AEAD vs CBC for migration scripts.
 
 **ChaCha20-Poly1305 AEAD** — `sealChaCha20`, `openChaCha20`. Wire version 0x02. Use for hardware without AES-NI.
 
@@ -183,7 +183,7 @@ function verify(key: Buffer | Uint8Array, data: Buffer | Uint8Array, mac: Buffer
 function constantTimeEqual(a: Buffer | Uint8Array, b: Buffer | Uint8Array): boolean
 
 // AES-CBC (16/24/32-byte keys; no built-in auth — pair with HMAC if needed)
-import { encryptCbc, decryptCbc, openAuto } from "@ubgo/crypt/legacy"
+import { encryptCbc, decryptCbc, openAuto } from "@ubgo/crypt"
 
 // ChaCha20-Poly1305 (alternative AEAD; wire version 0x02)
 function sealChaCha20(key: Buffer | Uint8Array, plaintext: string | Buffer | Uint8Array, aad?: Buffer | Uint8Array): string

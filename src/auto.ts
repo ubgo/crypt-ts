@@ -1,24 +1,26 @@
 /**
- * Migration helper for moving from the older AES-CBC ciphertext
- * format to the modern AES-GCM AEAD format.
+ * Format-detecting decrypt: dispatches between AES-GCM and AES-CBC
+ * ciphertext shapes.
  *
- * The presence of an `import "@ubgo/crypt/legacy"` line in any
- * non-migration code is a smell: production reads should call
- * `open` from "@ubgo/crypt" directly. This subpath exists to keep
- * migration tooling visible to code-search and code review.
+ * Useful for one-shot migration scripts iterating a table that
+ * contains both formats, or read paths during a rollover window
+ * when writers are emitting AEAD but historical CBC ciphertext may
+ * still be present.
+ *
+ * For normal application code, call `open` or `decryptCbc` directly
+ * — you should know which format the input is in.
  */
 
 import { Buffer } from "node:buffer"
 
-import { open } from "../aead.js"
+import { open } from "./aead.js"
 import { decryptCbc } from "./cbc.js"
-import { CBC_BLOCK_SIZE, AEAD_MIN_SIZE, VERSION_AEAD_V1 } from "../format.js"
-import { UnknownFormatError } from "../errors.js"
+import { CBC_BLOCK_SIZE, AEAD_MIN_SIZE, VERSION_AEAD_V1 } from "./format.js"
+import { UnknownFormatError } from "./errors.js"
 
 /**
- * Attempts to decrypt ciphertext that may be in either the modern
- * AEAD (base64url, version 0x01 prefix) or legacy AES-CBC (hex)
- * format.
+ * Attempts to decrypt ciphertext that may be in either AEAD
+ * (base64url, version 0x01 prefix) or AES-CBC (hex) format.
  *
  * Dispatch:
  *   1. If ciphertext base64url-decodes AND first byte is 0x01 AND
@@ -50,7 +52,7 @@ export function openAuto(
     }
   }
 
-  // Try legacy CBC path.
+  // Try CBC path.
   if (looksLikeCBC(ciphertext)) {
     try {
       return decryptCbc(key, ciphertext)

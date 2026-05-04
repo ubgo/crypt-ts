@@ -12,7 +12,7 @@ Short, copy-pasteable patterns. For runnable demos see [`examples/`](./examples)
 - [Webhooks](#webhooks)
 - [Files and blobs](#files-and-blobs)
 - [Multi-tenancy](#multi-tenancy)
-- [Migrating legacy data](#migrating-legacy-data)
+- [Migrating between ciphertext formats](#migrating-between-ciphertext-formats)
 - [Operational patterns](#operational-patterns)
 
 ---
@@ -329,12 +329,12 @@ const pt = sealer.open(ct, Buffer.from(`tenant:${tenantID}`))
 
 ---
 
-## Migrating legacy data
+## Migrating between ciphertext formats
 
 ### Read mixed-format ciphertexts
 
 ```ts
-import { openAuto } from "@ubgo/crypt/legacy"
+import { openAuto } from "@ubgo/crypt"
 
 const plain = openAuto(key, ciphertext)
 ```
@@ -343,7 +343,7 @@ const plain = openAuto(key, ciphertext)
 
 ```ts
 import { seal } from "@ubgo/crypt"
-import { openAuto } from "@ubgo/crypt/legacy"
+import { openAuto } from "@ubgo/crypt"
 
 const rows = await db.query(`SELECT id, ciphertext FROM partner_apps`)
 for (const r of rows) {

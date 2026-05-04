@@ -20,7 +20,7 @@ import {
   sign,
   verify,
 } from "../src/index.js"
-import { encryptCbc } from "../src/legacy/index.js"
+import { encryptCbc } from "../src/index.js"
 
 const key = nodeRandom(AEAD_KEY_SIZE)
 const sealer = new Sealer(key)

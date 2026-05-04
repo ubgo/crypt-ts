@@ -10,7 +10,7 @@
  */
 
 import { open, seal } from "@ubgo/crypt"
-import { encryptCbc, openAuto } from "@ubgo/crypt/legacy"
+import { encryptCbc, openAuto } from "@ubgo/crypt"
 import { Buffer } from "node:buffer"
 
 const key = Buffer.from("01234567890123456789012345678901")

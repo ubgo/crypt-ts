@@ -26,8 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **AEAD authenticated encryption**: `seal` / `open` and the `Sealer` class. AES-256-GCM. Byte-for-byte parity with `github.com/ubgo/crypt`.
 - **Random helpers**: `randomBytes`, `randomToken`, `randomHex`.
 - **HMAC-SHA256 signing**: `sign` / `verify` and `constantTimeEqual` wrapper.
-- **Legacy AES-CBC** at `@ubgo/crypt/legacy`: `encryptCbc` / `decryptCbc` for backward compatibility.
-- **Migration helper** at `@ubgo/crypt/legacy`: `openAuto` detects format and dispatches.
+- **AES-CBC** at `@ubgo/crypt`: `encryptCbc` / `decryptCbc` for backward compatibility.
+- **Migration helper** at `@ubgo/crypt`: `openAuto` detects format and dispatches.
 - **Cross-language test vectors** consumed from `testdata/vectors.json` (shared with the Go counterpart).
 - Strict TypeScript types; dual ESM + CJS build via tsup; vitest test runner.
 

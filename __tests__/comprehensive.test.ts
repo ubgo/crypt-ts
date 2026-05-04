@@ -18,7 +18,7 @@ import {
   verify,
 } from "../src/index.js"
 import { sealWithNonce } from "../src/aead.js"
-import { decryptCbc, encryptCbc, openAuto } from "../src/legacy/index.js"
+import { decryptCbc, encryptCbc, openAuto } from "../src/index.js"
 
 // ---------------------------------------------------------------------
 // AEAD comprehensive

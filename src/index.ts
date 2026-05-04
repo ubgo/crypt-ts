@@ -16,6 +16,8 @@
 
 export { seal, open, Sealer } from "./aead.js"
 export { sealChaCha20, openChaCha20 } from "./aead-chacha20.js"
+export { encryptCbc, decryptCbc } from "./cbc.js"
+export { openAuto } from "./auto.js"
 export { randomBytes, randomToken, randomHex } from "./random.js"
 export { sign, verify, constantTimeEqual } from "./sign.js"
 export { deriveKey } from "./hkdf.js"

@@ -13,7 +13,7 @@ import { dirname } from "node:path"
 
 import { open, sign, verify } from "../src/index.js"
 import { sealWithNonce } from "../src/aead.js"
-import { decryptCbc } from "../src/legacy/index.js"
+import { decryptCbc } from "../src/index.js"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 

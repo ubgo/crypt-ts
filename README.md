@@ -1,8 +1,10 @@
 # @ubgo/crypt
 
-[![npm](https://img.shields.io/badge/npm-%40ubgo%2Fcrypt-blue)](https://www.npmjs.com/package/@ubgo/crypt) [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/badge/npm-%40ubgo%2Fcrypt-blue?logo=npm)](https://www.npmjs.com/package/@ubgo/crypt) [![test](https://github.com/ubgo/crypt-ts/actions/workflows/test.yml/badge.svg)](https://github.com/ubgo/crypt-ts/actions/workflows/test.yml) [![lint](https://github.com/ubgo/crypt-ts/actions/workflows/lint.yml/badge.svg)](https://github.com/ubgo/crypt-ts/actions/workflows/lint.yml) ![coverage](https://img.shields.io/badge/coverage-98%25-brightgreen) [![types](https://img.shields.io/badge/types-included-blue?logo=typescript)](https://www.typescriptlang.org/) ![node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js) [![license](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 
 > Authenticated encryption, webhook signing, and secure random for Node.js — wrapped around `node:crypto` with safe defaults and byte-for-byte interop with the Go counterpart at [`github.com/ubgo/crypt`](https://github.com/ubgo/crypt).
+
+**@ubgo/crypt** (also known as **crypt-ts**) is a batteries-included **TypeScript / Node.js cryptography library**: AES-256-GCM and ChaCha20-Poly1305 authenticated encryption (AEAD), HMAC and Ed25519 signing, HKDF key derivation, graceful key rotation, time-locked tokens, and X25519 sealed-box asymmetric encryption — with safe defaults, zero runtime dependencies, dual ESM + CJS output, strict types, and a versioned wire format that is byte-for-byte interoperable with the Go package [`github.com/ubgo/crypt`](https://github.com/ubgo/crypt).
 
 ```ts
 import { seal, open, randomBytes, AEAD_KEY_SIZE } from "@ubgo/crypt"
@@ -15,7 +17,20 @@ const pt = open(key, ct).toString("utf8")
 
 That's the whole API for the most common case.
 
----
+## Contents
+
+- [Is this for you?](#is-this-for-you)
+- [30-second tour](#30-second-tour)
+- [Why @ubgo/crypt?](#why-ubgocrypt)
+- [What's included](#whats-included)
+- [API at a glance](#api-at-a-glance)
+- [FAQ](#faq)
+- [Documentation](#documentation)
+- [Cross-language with the Go counterpart](#cross-language-with-the-go-counterpart)
+- [Install](#install)
+- [Status](#status)
+- [Reporting vulnerabilities](#reporting-vulnerabilities)
+- [License](#license)
 
 ## Is this for you?
 
@@ -37,9 +52,7 @@ That's the whole API for the most common case.
 
 If any of those are on your plate, this is the package.
 
-**Not for you if:** you need browser/WebCrypto (this targets Node.js only), JWT/JOSE (use `@panva/jose`), TLS, PKI, password hashing in Node (do it server-side in Go via the Go counterpart's `HashPassword`), or KMS adapters / streaming AEAD (Go-only in v1.2).
-
----
+**Not for you if:** you need browser/WebCrypto (this targets Node.js only), JWT/JOSE (use `@panva/jose`), TLS, PKI, password hashing in Node (do it server-side in Go via the Go counterpart's `HashPassword`), or KMS adapters / streaming AEAD (Go-only).
 
 ## 30-second tour
 
@@ -98,9 +111,7 @@ const plaintext = open(sharedKey, ct)
 
 Same wire format, byte-for-byte. Verified by shared test vectors in CI.
 
----
-
-## Why this exists
+## Why @ubgo/crypt?
 
 The previous implementation in our codebase, `aitoolscrypt.ts`, was hand-rolled around `node:crypto` and had two latent bugs that silently corrupted any plaintext longer than 16 bytes (one AES block):
 
@@ -123,7 +134,18 @@ const plaintext = open(key, ciphertext)
 
 Plus a sibling in Go using the same wire format, with a shared test vector file enforcing parity in CI. That's `@ubgo/crypt`.
 
----
+| | **@ubgo/crypt** | `node:crypto` (DIY) | Hand-rolled wrappers |
+|---|---|---|---|
+| Authenticated encryption by default | ✅ AEAD out of the box | ⚠️ you must choose GCM and wire the IV/tag | ⚠️ often CBC without a MAC |
+| No `update()`/`final()` footgun | ✅ handled internally | ❌ mutable Cipher, easy to drop bytes | ⚠️ the exact bug this replaced |
+| Versioned wire format (safe upgrades) | ✅ | ❌ | ❌ |
+| Cross-language (Node ↔ Go) byte parity | ✅ shared vectors in CI | ❌ | ⚠️ hand-matched, drifts |
+| Key rotation with embedded kid | ✅ `KeyRing` | ❌ | ❌ |
+| Constant-time compare wired in | ✅ | ⚠️ remember `timingSafeEqual` | ❌ |
+| Strict types + dual ESM/CJS | ✅ | ⚠️ | ⚠️ |
+| Runtime dependencies | ✅ none (`node:crypto` only) | ✅ | ⚠️ varies |
+
+If you want to wire the primitives yourself, `node:crypto` is right there. If you want the *correct assembly* — authenticated, versioned, rotatable, and readable from Go — that's `@ubgo/crypt`.
 
 ## What's included
 
@@ -156,8 +178,6 @@ Plus a sibling in Go using the same wire format, with a shared test vector file 
 **Zero runtime dependencies** — only `node:crypto` from the standard library.
 
 Password hashing is intentionally not included; it's a server-side concern. Use the Go counterpart's `HashPassword` from your auth service, or pull `argon2` directly if you must hash in Node.
-
----
 
 ## API at a glance
 
@@ -218,18 +238,34 @@ function sealAsymmetric(recipientPublicKey: Buffer | Uint8Array, plaintext: Buff
 function openAsymmetric(recipientPrivateKey: Buffer | Uint8Array, ciphertext: string): Buffer
 ```
 
----
+## FAQ
+
+**Does @ubgo/crypt work in the browser?** No — it targets Node.js and builds on `node:crypto`. For browser code use the Web Crypto API, or a WebCrypto-based library. Anything encrypted here is still readable in the browser if you implement the same wire format, but this package itself is server-side.
+
+**Does it have any runtime dependencies?** No. The only thing it imports at runtime is `node:crypto` from the standard library, so it adds nothing to your dependency tree or your supply-chain surface.
+
+**Can Node decrypt what a Go service encrypted?** Yes. The Go counterpart [`github.com/ubgo/crypt`](https://github.com/ubgo/crypt) produces and consumes the exact same bytes; both repos run against the same `testdata/vectors.json`, so any divergence fails CI on both sides.
+
+**Does it do password hashing?** No, by design — password hashing is a server-side concern best done where argon2/bcrypt run natively. Use the Go counterpart's `HashPassword`, or pull `argon2` directly if you must hash in Node.
+
+**ESM or CommonJS?** Both. The package is dual-published with proper `exports` conditions, so `import` and `require` both resolve to the right build, with `.d.ts` types either way.
+
+**Should I use AES-GCM or ChaCha20-Poly1305?** Default to AES-256-GCM (`seal`/`open`) — fastest wherever AES-NI exists (nearly all server CPUs). Reach for ChaCha20-Poly1305 (`sealChaCha20`) on hardware without AES-NI or for algorithm diversity. Both share the same versioned format.
+
+**How is this different from using `node:crypto` directly?** `node:crypto` gives you a mutable, low-level Cipher API where forgetting to concatenate `update()` + `final()` silently corrupts data past the first block — the exact bug this package was written to kill. @ubgo/crypt wraps it with authentication, a versioned format, constant-time comparison, and Go interop so the parts that are easy to get wrong are already right.
+
+**Is AES-CBC deprecated?** No — it's a first-class peer kept for interop with existing AES-CBC systems and for reading ciphertext you already wrote. It has no built-in authentication, so pair it with HMAC or use `seal`/`open` when you need tamper detection.
+
+**What Node.js version does it need?** Node 18 or later.
 
 ## Documentation
 
 - **[RECIPES.md](./RECIPES.md)** — copy-pasteable patterns by task
-- **[examples/](./examples)** — 16 runnable end-to-end TypeScript programs
+- **[examples/](./examples)** — 23 runnable end-to-end TypeScript programs
 - **[BENCHMARKS.md](./BENCHMARKS.md)** — real numbers and what they mean
 - **[FAQ.md](./FAQ.md)** — answers to questions you'll have
 - **[Go counterpart](https://github.com/ubgo/crypt)** — `USAGE.md`, `SECURITY.md`, `WIRE_FORMAT.md`, `MIGRATION.md` apply equally
 - **[CHANGELOG.md](./CHANGELOG.md)**
-
----
 
 ## Cross-language with the Go counterpart
 
@@ -242,8 +278,6 @@ Three concrete patterns:
 3. **Either side can do either side.** No "primary" — both are first-class.
 
 If you're shipping a polyglot stack, this is the difference between "Node and Go services that mostly agree" and "Node and Go services that have correctness as a CI invariant."
-
----
 
 ## Install
 
@@ -259,12 +293,12 @@ Requires Node.js 18 or later.
 
 ESM and CJS dual-published. Strict-mode TypeScript types. Zero runtime dependencies (`node:crypto` only).
 
----
-
 ## Status
 
-- **v0.x** — pre-stable. Wire format is finalized but the surface API may receive small tweaks until v1.0.
-- **v1.0** — frozen API. Same wire format guarantees as the Go side.
+- **v0.x** — pre-stable. The wire format is finalized and pinned by the shared cross-language vectors (ciphertext written today stays readable), but the surface API may receive small tweaks until v1.0.
+- **v1.0** — frozen API, with the same wire-format guarantees as the Go side.
+
+Check the [CHANGELOG](./CHANGELOG.md) before upgrading.
 
 ## Reporting vulnerabilities
 
@@ -275,3 +309,5 @@ We aim to acknowledge within 48 hours and patch P0 issues within 7 days.
 ## License
 
 [Apache License 2.0](./LICENSE)
+
+<sub>@ubgo/crypt (crypt-ts) — a TypeScript / Node.js cryptography library for authenticated encryption (AES-256-GCM, ChaCha20-Poly1305 / AEAD), HMAC and Ed25519 signing, HKDF key derivation, key rotation, time-locked tokens, X25519 sealed-box asymmetric encryption, and secure random tokens. Apache-2.0, zero-dependency (node:crypto only), dual ESM + CJS, with a byte-for-byte Go counterpart (github.com/ubgo/crypt).</sub>

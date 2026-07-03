@@ -1,0 +1,39 @@
+{
+  "name": "crypt-ts",
+  "tagline": "Authenticated encryption, signing, and secure random for Node.js — safe defaults over node:crypto, with byte-for-byte interop with the Go crypt.",
+  "description": "crypt-ts (@ubgo/crypt) is a TypeScript/Node.js cryptography toolkit: AES-256-GCM and ChaCha20-Poly1305 authenticated encryption, HMAC and Ed25519 signing, HKDF key derivation, key rotation (KeyRing), time-locked tokens, X25519 sealed-box asymmetric encryption, and CSPRNG helpers — wrapped around node:crypto with safe defaults, zero runtime dependencies, dual ESM+CJS output, and a versioned wire format that is byte-for-byte interoperable with the Go counterpart github.com/ubgo/crypt.",
+  "repo": "ubgo/crypt-ts",
+  "homepage": "https://github.com/ubgo/crypt-ts",
+  "language": "typescript",
+  "kind": "library",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "khanakia",
+    "email": "khanakia@gmail.com",
+    "github": "khanakia"
+  },
+  "topics": [
+    "cryptography", "encryption", "typescript", "nodejs", "aes-gcm", "aead",
+    "chacha20-poly1305", "hmac", "ed25519", "hkdf", "webhook-signing",
+    "key-rotation", "authenticated-encryption", "security", "esm", "crypto"
+  ],
+  "positioning": {
+    "category": "Node.js cryptography library",
+    "audience": "Node/TypeScript backend engineers who need correct crypto without hand-rolling node:crypto's mutable Cipher API.",
+    "wedge": "Encrypt a value (or sign a webhook) in one line, authenticated by default, and read the exact same bytes from a Go service.",
+    "alternatives": ["node:crypto (DIY)", "hand-rolled wrappers"],
+    "differentiators": [
+      "Authenticated by default (AES-256-GCM / ChaCha20-Poly1305) — no update()/final() footguns from the raw node:crypto Cipher API.",
+      "Byte-for-byte interop with the Go twin github.com/ubgo/crypt via a shared known-answer vector file in CI.",
+      "Versioned wire format so new algorithms slot in without breaking decrypt of old data.",
+      "Zero runtime dependencies (node:crypto only); strict TypeScript; dual ESM + CJS build.",
+      "Batteries included: KeyRing rotation, HKDF, time-locked tokens, Ed25519, X25519 sealed-box."
+    ]
+  },
+  "install": {
+    "npm": "npm install @ubgo/crypt"
+  },
+  "khanakia": {
+    "addToApps": false
+  }
+}

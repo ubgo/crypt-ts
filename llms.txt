@@ -1,0 +1,21 @@
+# @ubgo/crypt (crypt-ts)
+
+> A TypeScript / Node.js cryptography library: AES-256-GCM and ChaCha20-Poly1305 authenticated encryption, HMAC and Ed25519 signing, HKDF key derivation, key rotation, time-locked tokens, and X25519 sealed-box asymmetric encryption — with safe defaults over node:crypto and byte-for-byte interop with the Go counterpart github.com/ubgo/crypt.
+
+@ubgo/crypt is open source (ubgo/crypt-ts), Apache-2.0 licensed. It is a library, not a service: it wraps Node's standard-library node:crypto — no third-party runtime dependencies, no network calls, nothing sent anywhere. Dual-published as ESM and CommonJS with strict TypeScript types.
+
+## Docs
+- [README](https://github.com/ubgo/crypt-ts/blob/main/README.md): overview, install, usage, FAQ
+- [RECIPES](https://github.com/ubgo/crypt-ts/blob/main/RECIPES.md): copy-pasteable patterns by task
+- [SECURITY](https://github.com/ubgo/crypt-ts/blob/main/SECURITY.md): threat model and disclosure policy
+- [BENCHMARKS](https://github.com/ubgo/crypt-ts/blob/main/BENCHMARKS.md): performance numbers
+- [FAQ](https://github.com/ubgo/crypt-ts/blob/main/FAQ.md): common questions
+- [CHANGELOG](https://github.com/ubgo/crypt-ts/blob/main/CHANGELOG.md): release history
+- [CONTRIBUTING](https://github.com/ubgo/crypt-ts/blob/main/CONTRIBUTING.md): how to contribute
+
+## Install
+- `npm install @ubgo/crypt` (or `pnpm add` / `yarn add`; requires Node.js 18+)
+
+## Links
+- Repository: https://github.com/ubgo/crypt-ts
+- Go counterpart (byte-for-byte interoperable): https://github.com/ubgo/crypt

@@ -24,6 +24,7 @@ That's the whole API for the most common case.
 - [Why @ubgo/crypt?](#why-ubgocrypt)
 - [What's included](#whats-included)
 - [API at a glance](#api-at-a-glance)
+- [Binding & rotating keys — design notes](#binding--rotating-keys--design-notes)
 - [FAQ](#faq)
 - [Documentation](#documentation)
 - [Cross-language with the Go counterpart](#cross-language-with-the-go-counterpart)
@@ -237,6 +238,16 @@ function generateKeyPair(): { publicKey: Buffer; privateKey: Buffer }
 function sealAsymmetric(recipientPublicKey: Buffer | Uint8Array, plaintext: Buffer | string | Uint8Array): string
 function openAsymmetric(recipientPrivateKey: Buffer | Uint8Array, ciphertext: string): Buffer
 ```
+
+## Binding & rotating keys — design notes
+
+A few questions come up often enough to answer here, since the choices are deliberate (and match the Go counterpart).
+
+**"Can I set one global encrypt key instead of passing it everywhere?"** Construct a `Sealer` once and reuse it. `new Sealer(key)` binds the key at construction; downstream code then calls `sealer.seal(pt, aad)` / `sealer.open(ct, aad)` with no key argument. There is intentionally no module-level default key and no `setDefaultKey()`: a global would be hidden mutable state — awkward to test (parallel test files share it), impossible to run two keys at once, and a silent zero-key footgun if used before it's set. Store the `Sealer` on your app/container/DI object instead of writing your own `encryptToken(key, …)` wrappers.
+
+**"Can a Sealer change its key on the fly?"** No — a `Sealer` holds its key in a `readonly #key` private field with no setter, so it's effectively immutable. That's deliberate: an immutable sealer is trivially safe to share across your whole process, and a hard key swap would instantly make all previously-sealed ciphertext undecryptable.
+
+**"Then how do I rotate keys?"** Use `KeyRing`: new writes use the active key, and reads dispatch by the `kid` embedded in each ciphertext, so previously-encrypted data stays readable while it migrates. This is the right tool for scheduled rotation and compromise response. If you only need a single-key swap at a safe boundary (e.g. a config reload), just build a fresh `Sealer` and replace your reference to it.
 
 ## FAQ
 

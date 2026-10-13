@@ -26,7 +26,7 @@
       "Authenticated by default (AES-256-GCM / ChaCha20-Poly1305) — no update()/final() footguns from the raw node:crypto Cipher API.",
       "Byte-for-byte interop with the Go twin github.com/ubgo/crypt via a shared known-answer vector file in CI.",
       "Versioned wire format so new algorithms slot in without breaking decrypt of old data.",
-      "Zero runtime dependencies (node:crypto only); strict TypeScript; dual ESM + CJS build.",
+      "Zero runtime dependencies (Node built-ins node:crypto and node:buffer only); strict TypeScript; dual ESM + CJS build.",
       "Batteries included: KeyRing rotation, HKDF, time-locked tokens, Ed25519, X25519 sealed-box."
     ]
   },

@@ -144,7 +144,7 @@ Plus a sibling in Go using the same wire format, with a shared test vector file 
 | Key rotation with embedded kid | ✅ `KeyRing` | ❌ | ❌ |
 | Constant-time compare wired in | ✅ | ⚠️ remember `timingSafeEqual` | ❌ |
 | Strict types + dual ESM/CJS | ✅ | ⚠️ | ⚠️ |
-| Runtime dependencies | ✅ none (`node:crypto` only) | ✅ | ⚠️ varies |
+| Runtime dependencies | ✅ none (Node built-ins `node:crypto` and `node:buffer` only) | ✅ | ⚠️ varies |
 
 If you want to wire the primitives yourself, `node:crypto` is right there. If you want the *correct assembly* — authenticated, versioned, rotatable, and readable from Go — that's `@ubgo/crypt`.
 
@@ -176,7 +176,7 @@ If you want to wire the primitives yourself, `node:crypto` is right there. If yo
 
 **Strict TypeScript** — full types, no `any`, dual ESM + CJS build.
 
-**Zero runtime dependencies** — only `node:crypto` from the standard library.
+**Zero runtime dependencies** — only the Node built-ins `node:crypto` and `node:buffer`.
 
 Password hashing is intentionally not included; it's a server-side concern. Use the Go counterpart's `HashPassword` from your auth service, or pull `argon2` directly if you must hash in Node.
 
@@ -253,7 +253,7 @@ A few questions come up often enough to answer here, since the choices are delib
 
 **Does @ubgo/crypt work in the browser?** No — it targets Node.js and builds on `node:crypto`. For browser code use the Web Crypto API, or a WebCrypto-based library. Anything encrypted here is still readable in the browser if you implement the same wire format, but this package itself is server-side.
 
-**Does it have any runtime dependencies?** No. The only thing it imports at runtime is `node:crypto` from the standard library, so it adds nothing to your dependency tree or your supply-chain surface.
+**Does it have any runtime dependencies?** No. The only things it imports at runtime are the Node built-ins `node:crypto` and `node:buffer`, so it adds nothing to your dependency tree or your supply-chain surface.
 
 **Can Node decrypt what a Go service encrypted?** Yes. The Go counterpart [`github.com/ubgo/crypt`](https://github.com/ubgo/crypt) produces and consumes the exact same bytes; both repos run against the same `testdata/vectors.json`, so any divergence fails CI on both sides.
 
@@ -302,7 +302,7 @@ yarn add @ubgo/crypt
 
 Requires Node.js 18 or later.
 
-ESM and CJS dual-published. Strict-mode TypeScript types. Zero runtime dependencies (`node:crypto` only).
+ESM and CJS dual-published. Strict-mode TypeScript types. Zero runtime dependencies (Node built-ins only).
 
 ## Status
 
